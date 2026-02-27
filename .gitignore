@@ -1,0 +1,116 @@
+############################
+# Python
+############################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+
+############################
+# Virtualenv
+############################
+venv/
+.env/
+.env.*
+.venv/
+
+############################
+# Django
+############################
+*.log
+local_settings.py
+settings_local.py
+redirect_table.py
+
+# SQLite（使っている場合）
+db.sqlite3
+
+############################
+# Django migrations
+############################
+migrations/
+site-migrate/
+resource/
+
+############################
+# Media / Static
+############################
+#media/
+#staticfiles/
+
+# collectstatic の出力
+static_root/
+static_collected/
+
+storage/
+logs/
+pids/
+test/
+
+############################
+# Upload / Image processing
+############################
+uploads/
+raw/
+generated/
+variants/
+
+############################
+# Secrets
+############################
+.env
+.env.local
+.env.production
+.env.dev
+
+############################
+# IDE / Editor
+############################
+.vscode/
+.idea/
+*.swp
+*.swo
+
+############################
+# OS
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Test / Coverage
+############################
+.coverage
+htmlcov/
+.pytest_cache/
+
+############################
+# Node (もしフロントを含むなら)
+############################
+node_modules/
+dist/
+build/
+
+############################
+# esbuild binary
+############################
+bin/
+
+############################
+# JSX build output
+############################
+manage/static/manage/js/**/*.js
+
+############################
+# Claude Code
+############################
+.claude/
+
+############################
+# Docs (session-specific)
+############################
+docs/histories/
+docs/sessions/
