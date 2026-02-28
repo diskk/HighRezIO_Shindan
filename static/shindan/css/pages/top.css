@@ -325,6 +325,14 @@
     word-break: break-word;
 }
 
+.shindan-result-card__bird-link {
+    color: inherit;
+    text-decoration: none;
+}
+.shindan-result-card__bird-link:hover {
+    text-decoration: underline;
+}
+
 .shindan-result-card__info-btn {
     display: inline-flex;
     align-items: center;

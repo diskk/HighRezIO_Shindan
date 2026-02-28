@@ -675,11 +675,15 @@ const ResultScreen = ({ result, onRetry }) => {
             <div className="shindan-result-card">
                 {/* 上部: アイコン(左) + ラベル・鳥名(右) */}
                 <div className="shindan-result-card__top">
-                    <BirdAvatar bird={bird} size={80} />
+                    <a href={'/blog/gallery/?tab=tag&key=' + encodeURIComponent(bird.name) + '&label=' + encodeURIComponent(bird.name)}>
+                        <BirdAvatar bird={bird} size={80} />
+                    </a>
                     <div className="shindan-result-card__top-text">
                         <p className="shindan-result-card__label">あなたに似ている鳥</p>
                         <h2 className="shindan-result-card__name">
-                            {bird.name}
+                            <a href={'/blog/gallery/?tab=tag&key=' + encodeURIComponent(bird.name) + '&label=' + encodeURIComponent(bird.name)} className="shindan-result-card__bird-link">
+                                {bird.name}
+                            </a>
                             {bird.description && (
                                 <button
                                     className="shindan-result-card__info-btn"
