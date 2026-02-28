@@ -315,8 +315,34 @@ const AdSlot = () => {
     );
 };
 
+// --- 免責事項ポップアップ ---
+const DisclaimerPopup = ({ onAgree, onClose }) => {
+    const handleOverlayClick = (e) => {
+        if (e.target === e.currentTarget) onClose();
+    };
+
+    return (
+        <div className="shindan-overlay" onClick={handleOverlayClick}>
+            <div className="shindan-popup">
+                <h3 className="shindan-popup__title">診断についての注意事項</h3>
+                <ul className="shindan-disclaimer__list">
+                    <li>本診断はエンターテイメント目的で提供しています。診断結果について一切の責任を負いかねます。</li>
+                    <li>掲載されている野鳥の写真は、すべてサイト管理者が撮影したものです。</li>
+                    <li>質問文や結果の説明文はAIによって生成されたものです。内容に誤りが含まれる場合があります。</li>
+                </ul>
+                <button className="shindan-disclaimer__agree-btn" onClick={onAgree}>
+                    同意して始める
+                </button>
+                <button className="shindan-popup__close" onClick={onClose}>戻る</button>
+            </div>
+        </div>
+    );
+};
+
 // --- 開始画面 ---
 const StartScreen = ({ onStart }) => {
+    const [showDisclaimer, setShowDisclaimer] = useState(false);
+
     return (
         <div className="shindan-start">
             <AdSlot key="ad-start" />
@@ -332,13 +358,19 @@ const StartScreen = ({ onStart }) => {
                 {config.description || `約${questions.length}問の質問に答えて、あなたの野鳥撮影スタイルを診断！あなたに似た野鳥も見つかります。`}
             </p>
             <p className="shindan-start__meta">所要時間：約3分</p>
-            <button className="shindan-start-btn" onClick={onStart}>
+            <button className="shindan-start-btn" onClick={() => setShowDisclaimer(true)}>
                 診断スタート
             </button>
             {config.siteUrl && (
                 <a className="shindan-start__site-link" href={config.siteUrl}>
                     {config.siteTitle || 'サイト'} HOMEへ →
                 </a>
+            )}
+            {showDisclaimer && (
+                <DisclaimerPopup
+                    onAgree={onStart}
+                    onClose={() => setShowDisclaimer(false)}
+                />
             )}
         </div>
     );
@@ -677,12 +709,12 @@ const ResultScreen = ({ result, onRetry }) => {
                     onClick={handleSaveImage}
                     disabled={isSaving}
                 >
-                    {isSaving ? '画像を生成中...' : (
+                    {isSaving ? '生成中...' : (
                         <>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-3px', marginRight: '6px' }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-3px', marginRight: '4px' }}>
                                 <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
                             </svg>
-                            画像を保存・共有
+                            保存・共有
                         </>
                     )}
                 </button>

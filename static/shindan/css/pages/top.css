@@ -422,7 +422,8 @@
 .shindan-save-btn {
     display: block;
     margin: 0;
-    padding: 14px 24px;
+    padding: 14px 16px;
+    white-space: nowrap;
     border: none;
     border-radius: var(--shindan-radius-sm);
     background: var(--shindan-primary);
@@ -532,6 +533,40 @@
 
 .shindan-popup__close:hover {
     background: var(--shindan-primary-light);
+}
+
+/* 免責事項ポップアップ */
+.shindan-disclaimer__list {
+    font-size: 13px;
+    color: var(--shindan-text-secondary);
+    line-height: 1.8;
+    margin: 0 0 20px;
+    padding-left: 20px;
+}
+
+.shindan-disclaimer__list li {
+    margin-bottom: 8px;
+}
+
+.shindan-disclaimer__list li:last-child {
+    margin-bottom: 0;
+}
+
+.shindan-disclaimer__agree-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: var(--shindan-radius-sm);
+    background: var(--shindan-primary);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    transition: background var(--shindan-transition);
+}
+
+.shindan-disclaimer__agree-btn:hover {
+    background: var(--shindan-primary-hover);
 }
 
 /* ========================================
