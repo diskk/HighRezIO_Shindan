@@ -17,7 +17,7 @@ const ShindanSettings = () => {
     const toast = window.useToast();
 
     const [activeSubTab, setActiveSubTab] = React.useState('general');
-    const [data, setData] = React.useState({ components: [], questions: [], birds: [], settings: { title: '', top_media_id: '' } });
+    const [data, setData] = React.useState({ public: false, ad_blocker_detection: false, components: [], questions: [], birds: [], settings: { title: '', top_media_id: '' } });
     const [prompts, setPrompts] = React.useState({ component: '', question: '', bird: '' });
     const [isLoading, setIsLoading] = React.useState(true);
     const [isSaving, setIsSaving] = React.useState(false);
@@ -36,6 +36,8 @@ const ShindanSettings = () => {
             .then(res => {
                 if (res.success) {
                     setData({
+                        public: res.data.public || false,
+                        ad_blocker_detection: res.data.ad_blocker_detection || false,
                         components: res.data.components || [],
                         questions: res.data.questions || [],
                         birds: res.data.birds || [],
@@ -102,6 +104,10 @@ const ShindanSettings = () => {
                 <GeneralTab
                     settings={data.settings || {}}
                     onChange={(settings) => setData({ ...data, settings })}
+                    isPublic={data.public || false}
+                    onPublicChange={(value) => setData({ ...data, public: value })}
+                    adBlockerDetection={data.ad_blocker_detection || false}
+                    onAdBlockerDetectionChange={(value) => setData({ ...data, ad_blocker_detection: value })}
                 />
             )}
             {activeSubTab === 'components' && (
@@ -146,7 +152,7 @@ const ShindanSettings = () => {
 };
 
 // --- 全般設定タブ ---
-const GeneralTab = ({ settings, onChange }) => {
+const GeneralTab = ({ settings, onChange, isPublic, onPublicChange, adBlockerDetection, onAdBlockerDetectionChange }) => {
     const [mediaSelecting, setMediaSelecting] = React.useState(false);
     const [topImageUrl, setTopImageUrl] = React.useState('');
     const MediaSelector = window.MediaSelector;
@@ -174,6 +180,36 @@ const GeneralTab = ({ settings, onChange }) => {
     return (
         <div className="space-y-4">
             <p className="text-xs text-slate-500">診断ページの基本設定を行います。</p>
+
+            {/* 一般公開 */}
+            <div className="flex items-center gap-3">
+                <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={isPublic}
+                        onChange={(e) => onPublicChange(e.target.checked)}
+                        className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-300 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600" />
+                </label>
+                <span className="text-sm font-medium text-slate-700">一般公開</span>
+            </div>
+            <p className="text-xs text-slate-400 -mt-2">OFFの場合、管理者のみアクセスできます</p>
+
+            {/* 広告ブロッカー検出 */}
+            <div className="flex items-center gap-3">
+                <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={adBlockerDetection}
+                        onChange={(e) => onAdBlockerDetectionChange(e.target.checked)}
+                        className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-300 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600" />
+                </label>
+                <span className="text-sm font-medium text-slate-700">広告ブロッカー検出</span>
+            </div>
+            <p className="text-xs text-slate-400 -mt-2">ONの場合、広告ブロッカーを検出してページ閲覧をブロックします</p>
 
             {/* タイトル */}
             <div>

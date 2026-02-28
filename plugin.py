@@ -22,6 +22,16 @@ class ShindanPlugin(PluginBase):
     def get_settings_component(self):
         return 'shindan/js/manage/settings.jsx'
 
+    # sitemap 用エントリ（公開時のみ）
+    def get_sitemap_entries(self, site_url):
+        if not self.is_public():
+            return []
+        return [{
+            'loc': f'{site_url}/plugins/shindan/',
+            'changefreq': 'monthly',
+            'priority': '0.5',
+        }]
+
     # プラグインデフォルト値を取得
     # Args:
     #   key: 設定キー

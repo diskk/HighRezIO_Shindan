@@ -10,7 +10,7 @@ from utils.logger_util import LoggerUtil
 
 # 結果算出API
 # クライアントから全回答を受け取り、スコア計算 + 野鳥マッチングを行う
-# 認証不要（公開API）
+# 公開時は認証不要、非公開時は管理者のみ
 class ResultView(View):
     # POST /plugins/shindan/api/result/
     # Args:
@@ -21,6 +21,12 @@ class ResultView(View):
         LoggerUtil.prepare()
         LoggerUtil.info(f"POST {request.path}")
 
+        plugin = ShindanPlugin()
+
+        # アクセス制御: 非公開かつ非管理者 → 403
+        if not plugin.is_public() and not request.session.get('is_admin', False):
+            return JsonResponse({'error': 'Forbidden'}, status=403)
+
         try:
             body = json.loads(request.body)
         except json.JSONDecodeError:
@@ -30,7 +36,6 @@ class ResultView(View):
         if not answers:
             return JsonResponse({'error': '回答がありません'}, status=400)
 
-        plugin = ShindanPlugin()
         data = plugin.get_data()
 
         components = data.get('components', [])

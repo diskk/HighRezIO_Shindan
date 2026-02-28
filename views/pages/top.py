@@ -1,6 +1,7 @@
 import json
 import random
 
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.views import View
 
@@ -18,6 +19,11 @@ class TopView(View):
         LoggerUtil.info(f"GET {request.path}")
 
         plugin = ShindanPlugin()
+
+        # アクセス制御: 非公開かつ非管理者 → 403
+        if not plugin.is_public() and not request.session.get('is_admin', False):
+            return HttpResponse('Forbidden', status=403)
+
         data = plugin.get_data()
         setting_util = SettingUtil()
 
@@ -104,6 +110,13 @@ class TopView(View):
         publisher_id = '' if is_admin else (setting_util.get('adsense_publisher_id') or '')
         ad_unit_id = '' if is_admin else (setting_util.get('ad_default_unit_id') or '')
 
+        # 広告ブロッカー検出（設定ON + 広告設定あり + 非管理者）
+        detect_ad_blocker = (
+            data.get('ad_blocker_detection', False)
+            and bool(publisher_id)
+            and not is_admin
+        )
+
         # サイト情報
         site_title = setting_util.get('site_title') or ''
         site_url = setting_util.get('site_url') or ''
@@ -126,5 +139,6 @@ class TopView(View):
             'adsense_publisher_id': publisher_id,
             'ad_unit_id': ad_unit_id,
             'ad_preview': ad_preview,
+            'detect_ad_blocker': detect_ad_blocker,
         }
         return render(request, 'shindan/top.html', context)
