@@ -49,6 +49,235 @@ const computeCropStyle = (imgSize, containerSize, cx, cy, zoom) => {
     };
 };
 
+// --- 画像生成・保存ユーティリティ ---
+
+// 画像を読み込んで Promise で返す
+const loadImage = (url) => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = url;
+    });
+};
+
+// 結果画像を Canvas で生成して Blob で返す
+const generateResultImage = async (bird, scores) => {
+    const SIZE = 1080;
+    const canvas = document.createElement('canvas');
+    canvas.width = SIZE;
+    canvas.height = SIZE;
+    const ctx = canvas.getContext('2d');
+
+    // 背景グラデーション
+    const bg = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+    bg.addColorStop(0, '#eef2ff');
+    bg.addColorStop(1, '#f0f9ff');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, SIZE, SIZE);
+
+    // カード背景（角丸 + シャドウ）
+    const cardMargin = 24;
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(cardMargin, cardMargin, SIZE - cardMargin * 2, SIZE - cardMargin * 2, 28);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+    ctx.shadowBlur = 30;
+    ctx.shadowOffsetY = 8;
+    ctx.fill();
+    ctx.restore();
+
+    // --- 上部: 鳥アイコン（左）+ テキスト（右） ---
+    const pad = 60;
+    const avatarSize = 180;
+    const avatarCx = cardMargin + pad + avatarSize / 2;
+    const avatarCy = cardMargin + pad + avatarSize / 2;
+
+    try {
+        const birdImg = await loadImage(bird.media_url);
+
+        // アバター外枠（影）
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avatarCx, avatarCy, avatarSize / 2 + 2, 0, Math.PI * 2);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetY = 4;
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.restore();
+
+        // 画像を丸型にクリップして描画
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avatarCx, avatarCy, avatarSize / 2, 0, Math.PI * 2);
+        ctx.clip();
+        const cropCx = bird.crop?.center_x ?? 50;
+        const cropCy = bird.crop?.center_y ?? 50;
+        const cropZoom = bird.crop?.zoom ?? 100;
+        const coverScale = Math.max(avatarSize / birdImg.naturalWidth, avatarSize / birdImg.naturalHeight);
+        const scale = coverScale * (cropZoom / 100);
+        const imgW = birdImg.naturalWidth * scale;
+        const imgH = birdImg.naturalHeight * scale;
+        const imgLeft = avatarCx - avatarSize / 2 - (imgW - avatarSize) * (cropCx / 100);
+        const imgTop = avatarCy - avatarSize / 2 - (imgH - avatarSize) * (cropCy / 100);
+        ctx.drawImage(birdImg, imgLeft, imgTop, imgW, imgH);
+        ctx.restore();
+    } catch (e) {
+        // 画像読み込み失敗時: プレースホルダー円を描画
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avatarCx, avatarCy, avatarSize / 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // テキスト: 「あなたに似ている鳥」+ 鳥名（アイコン右、アイコン高さの中央に配置）
+    const textX = avatarCx + avatarSize / 2 + 30;
+    // 鳥名の最大幅（右上タイトル領域を避ける）
+    const maxTextW = 450;
+
+    // 鳥名のフォントサイズを自動縮小（文字数ベースで推定幅を計算）
+    let nameFontSize = 40;
+    while (nameFontSize > 20 && bird.name.length * nameFontSize > maxTextW) {
+        nameFontSize -= 2;
+    }
+    ctx.font = '700 ' + nameFontSize + 'px "Noto Sans JP"';
+
+    // ラベル(26px) + gap(12) + 鳥名(nameFontSize) の合計高さの中心をアイコン中心に合わせる
+    const textBlockH = 26 + 12 + nameFontSize;
+    const textBlockTop = avatarCy - textBlockH / 2;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+
+    ctx.font = '500 26px "Noto Sans JP"';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('あなたに似ている鳥', textX, textBlockTop);
+
+    ctx.font = '700 ' + nameFontSize + 'px "Noto Sans JP"';
+    ctx.fillStyle = '#1e293b';
+    ctx.fillText(bird.name, textX, textBlockTop + 26 + 12);
+
+    // --- 下部: レーダーチャート（中央）+ 診断コメント（左下）+ タイトル（右下） ---
+    const chartSize = 640;
+    const chartCanvas = document.createElement('canvas');
+    chartCanvas.width = chartSize;
+    chartCanvas.height = chartSize;
+
+    const chartLabels = components.map(c => c.name);
+    const chartData = components.map(c => scores[c.name] || 0);
+
+    const tempChart = new Chart(chartCanvas, {
+        type: 'radar',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                data: chartData,
+                backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                borderColor: 'rgba(37, 99, 235, 0.8)',
+                borderWidth: 2.5,
+                pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+                pointRadius: 5,
+            }],
+        },
+        options: {
+            responsive: false,
+            animation: false,
+            layout: { padding: 14 },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { stepSize: 20, display: false },
+                    grid: { color: 'rgba(0,0,0,0.12)' },
+                    angleLines: { color: 'rgba(0,0,0,0.12)' },
+                    pointLabels: {
+                        font: { size: 25, family: 'Noto Sans JP', weight: '600' },
+                        color: '#475569',
+                        padding: 18,
+                    },
+                },
+            },
+            plugins: { legend: { display: false } },
+        },
+    });
+
+    // チャートを左右センタリング配置
+    const topSectionBottom = avatarCy + avatarSize / 2;
+    const cardBottom = SIZE - cardMargin;
+    const chartY = topSectionBottom + 4;
+    const chartX = (SIZE - chartSize) / 2;
+    ctx.drawImage(chartCanvas, chartX, chartY, chartSize, chartSize);
+    tempChart.destroy();
+
+    // タイトル + URL（右上）
+    const rightX = SIZE - cardMargin - pad;
+    const topY = cardMargin + pad;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+
+    ctx.font = '600 24px "Noto Sans JP"';
+    ctx.fillStyle = '#475569';
+    ctx.fillText(config.title || 'AIとりや成分診断', rightX, topY);
+
+    const siteUrl = (config.siteUrl || '').replace(/^https?:\/\//, '');
+    if (siteUrl) {
+        ctx.font = '400 20px "Noto Sans JP"';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(siteUrl, rightX, topY + 32);
+    }
+
+    // 診断コメント（下部センタリング、上位2成分を抽出）
+    const sortedScores = components
+        .map(c => ({ name: c.name, score: scores[c.name] || 0 }))
+        .sort((a, b) => b.score - a.score);
+    const top2 = sortedScores.slice(0, 2).map(s => s.name);
+    const commentText = 'あなたは「' + top2[0] + '」と「' + top2[1] + '」が高めのタイプ';
+
+    const bottomY = cardBottom - pad;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.font = '500 26px "Noto Sans JP"';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText(commentText, SIZE / 2, bottomY);
+
+    return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), 'image/png');
+    });
+};
+
+// 生成した画像を保存（Share API → download フォールバック）
+const saveResultImage = async (blob, birdName) => {
+    const filename = 'shindan-' + birdName + '.png';
+
+    // モバイル: Web Share API でシェアシートを表示
+    if (navigator.share && navigator.canShare) {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({ files: [file] });
+                return;
+            } catch (e) {
+                // キャンセルまたはエラー — フォールバックへ
+            }
+        }
+    }
+
+    // デスクトップ / フォールバック: ダウンロード
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
 // --- AdSlot コンポーネント ---
 const AdSlot = () => {
     const ref = useRef(null);
@@ -92,7 +321,9 @@ const StartScreen = ({ onStart }) => {
         <div className="shindan-start">
             <AdSlot key="ad-start" />
             {config.topImageUrl ? (
-                <img className="shindan-start__image" src={config.topImageUrl} alt="" />
+                <a href="/plugins/shindan/">
+                    <img className="shindan-start__image" src={config.topImageUrl} alt="" />
+                </a>
             ) : (
                 <div className="shindan-start__icon">🐦</div>
             )}
@@ -161,6 +392,11 @@ const QuestionScreen = ({ currentQuestion, onAnswer }) => {
                 onAnswer={onAnswer}
                 animKey={currentQuestion}
             />
+            {config.siteUrl && (
+                <a className="shindan-start__site-link" href={config.siteUrl} style={{ display: 'flex', justifyContent: 'center' }}>
+                    {config.siteTitle || 'サイト'} HOMEへ →
+                </a>
+            )}
         </div>
     );
 };
@@ -280,12 +516,12 @@ const RadarChart = ({ scores, onLabelClick, onRetry }) => {
                         beginAtZero: true,
                         max: 100,
                         ticks: { stepSize: 20, display: false },
-                        grid: { color: 'rgba(0,0,0,0.06)' },
-                        angleLines: { color: 'rgba(0,0,0,0.06)' },
+                        grid: { color: 'rgba(0,0,0,0.1)' },
+                        angleLines: { color: 'rgba(0,0,0,0.1)' },
                         pointLabels: {
                             font: { size: 12, family: 'Noto Sans JP', weight: '600' },
                             color: 'transparent',
-                            padding: 8,
+                            padding: 16,
                         },
                     },
                 },
@@ -313,17 +549,9 @@ const RadarChart = ({ scores, onLabelClick, onRetry }) => {
 
     return (
         <div className="shindan-radar">
-            <h2 className="shindan-radar__title">あなたの成分</h2>
             <div className="shindan-radar__canvas-wrap">
                 <canvas ref={canvasRef} />
             </div>
-            {onRetry && (
-                <div className="shindan-radar__footer">
-                    <button className="shindan-retry-btn" onClick={onRetry}>
-                        もう一度診断する
-                    </button>
-                </div>
-            )}
         </div>
     );
 };
@@ -379,37 +607,88 @@ const BirdPopup = ({ bird, onClose }) => {
 const ResultScreen = ({ result, onRetry }) => {
     const [selectedComponent, setSelectedComponent] = useState(null);
     const [showBirdPopup, setShowBirdPopup] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const { scores, bird, similarity } = result;
+
+    // 結果画像を生成して保存
+    const handleSaveImage = async () => {
+        setIsSaving(true);
+        try {
+            const blob = await generateResultImage(bird, scores);
+            await saveResultImage(blob, bird.name);
+        } catch (e) {
+            // エラー時は何もしない
+        }
+        setIsSaving(false);
+    };
+
+    // 上位2成分を抽出して一言診断を生成
+    const sortedScores = components
+        .map(c => ({ name: c.name, score: scores[c.name] || 0 }))
+        .sort((a, b) => b.score - a.score);
+    const top2 = sortedScores.slice(0, 2).map(s => s.name);
+    const commentText = 'あなたは「' + top2[0] + '」と「' + top2[1] + '」が高めのタイプ';
 
     return (
         <div className="shindan-result">
             {/* トップ画像 + タイトル */}
             {config.topImageUrl && (
-                <img className="shindan-result__image" src={config.topImageUrl} alt="" />
+                <a href="/plugins/shindan/">
+                    <img className="shindan-result__image" src={config.topImageUrl} alt="" />
+                </a>
             )}
             <h1 className="shindan-result__title">{config.title || 'AIとりや成分診断'} 結果</h1>
 
             {/* 鳥 + レーダーチャート 統合カード */}
             <div className="shindan-result-card">
-                <p className="shindan-result-card__label">あなたに似ている鳥</p>
-                <div className="shindan-result-card__bird">
-                    <BirdAvatar bird={bird} size={96} />
-                    <h2 className="shindan-result-card__name">
-                        {bird.name}
-                        {bird.description && (
-                            <button
-                                className="shindan-result-card__info-btn"
-                                onClick={() => setShowBirdPopup(true)}
-                                title="この鳥について"
-                            >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-                                </svg>
-                            </button>
-                        )}
-                    </h2>
+                {/* 上部: アイコン(左) + ラベル・鳥名(右) */}
+                <div className="shindan-result-card__top">
+                    <BirdAvatar bird={bird} size={80} />
+                    <div className="shindan-result-card__top-text">
+                        <p className="shindan-result-card__label">あなたに似ている鳥</p>
+                        <h2 className="shindan-result-card__name">
+                            {bird.name}
+                            {bird.description && (
+                                <button
+                                    className="shindan-result-card__info-btn"
+                                    onClick={() => setShowBirdPopup(true)}
+                                    title="この鳥について"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                                    </svg>
+                                </button>
+                            )}
+                        </h2>
+                    </div>
                 </div>
-                <RadarChart scores={scores} onLabelClick={(comp) => setSelectedComponent(comp)} onRetry={onRetry} />
+
+                {/* レーダーチャート */}
+                <RadarChart scores={scores} onLabelClick={(comp) => setSelectedComponent(comp)} />
+
+                {/* 一言診断 */}
+                <p className="shindan-result-card__comment">{commentText}</p>
+            </div>
+
+            {/* アクションボタン */}
+            <div className="shindan-result__actions">
+                <button
+                    className="shindan-save-btn"
+                    onClick={handleSaveImage}
+                    disabled={isSaving}
+                >
+                    {isSaving ? '画像を生成中...' : (
+                        <>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: '-3px', marginRight: '6px' }}>
+                                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+                            </svg>
+                            画像を保存・共有
+                        </>
+                    )}
+                </button>
+                <button className="shindan-retry-btn" onClick={onRetry}>
+                    もう一度診断する
+                </button>
             </div>
 
             {/* サイトリンク */}
@@ -473,7 +752,7 @@ const ShindanApp = () => {
     // 結果API呼び出し
     const submitAnswers = async (allAnswers) => {
         setPhase('loading');
-        history.pushState(null, '', '/plugins/shindan/result/');
+        history.pushState(null, '', '/plugins/shindan/');
         window.scrollTo(0, 0);
 
         try {

@@ -108,12 +108,16 @@ class TopView(View):
         site_title = setting_util.get('site_title') or ''
         site_url = setting_util.get('site_url') or ''
 
+        # OGP画像（フルURL）
+        og_image = f'{site_url}{top_image_url}' if site_url and top_image_url else ''
+
         context = {
             'plugin_name': plugin_title,
             'plugin_description': plugin_description,
             'site_title': site_title,
             'site_url': site_url,
             'top_image_url': top_image_url,
+            'og_image': og_image,
             'shindan_data_json': json.dumps({
                 'components': components_public,
                 'questions': questions_public,

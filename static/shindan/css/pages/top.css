@@ -150,6 +150,10 @@
     padding: 24px 20px;
     box-shadow: var(--shindan-shadow);
     margin-bottom: 16px;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .shindan-qcard__text {
@@ -272,19 +276,41 @@
     margin-bottom: 16px;
 }
 
+/* 上部: アイコン(左) + ラベル・鳥名(右) */
+.shindan-result-card__top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+}
+
+.shindan-result-card__top-text {
+    min-width: 0;
+}
+
 .shindan-result-card__label {
     font-size: 13px;
     color: var(--shindan-text-muted);
-    margin: 0 0 12px;
+    margin: 0 0 4px;
     font-weight: 500;
-    text-align: center;
+    text-align: left;
 }
 
-.shindan-result-card__bird {
+/* 一言診断コメント */
+.shindan-result-card__comment {
+    font-size: 14px;
+    color: var(--shindan-text-muted);
+    font-weight: 500;
+    text-align: center;
+    margin: 4px 0 0;
+}
+
+/* アクションボタン */
+.shindan-result__actions {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 16px;
 }
 
 .shindan-result-card__name {
@@ -387,6 +413,33 @@
 .shindan-comp-btn:hover {
     border-color: var(--shindan-primary);
     color: var(--shindan-primary);
+}
+
+/* ========================================
+   画像保存ボタン
+   ======================================== */
+
+.shindan-save-btn {
+    display: block;
+    margin: 0;
+    padding: 14px 24px;
+    border: none;
+    border-radius: var(--shindan-radius-sm);
+    background: var(--shindan-primary);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: background var(--shindan-transition), opacity var(--shindan-transition);
+}
+
+.shindan-save-btn:hover {
+    background: #1d4ed8;
+}
+
+.shindan-save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* ========================================
@@ -514,12 +567,12 @@
 .shindan-retry-btn {
     display: block;
     margin: 0;
-    padding: 6px 20px;
+    padding: 14px 24px;
     border: 1.5px solid var(--shindan-border);
     border-radius: var(--shindan-radius-sm);
     background: transparent;
     color: var(--shindan-text-muted);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
     transition: border-color var(--shindan-transition), color var(--shindan-transition);
 }
@@ -600,12 +653,20 @@
         padding: 24px 24px;
     }
 
+    .shindan-result-card__label {
+        font-size: 14px;
+    }
+
     .shindan-result-card__name {
-        font-size: 22px;
+        font-size: 24px;
+    }
+
+    .shindan-result-card__comment {
+        font-size: 15px;
     }
 
     .shindan-radar__canvas-wrap {
-        max-width: 360px;
+        max-width: 380px;
     }
 
     .shindan-ad-slot {

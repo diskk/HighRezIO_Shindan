@@ -9,7 +9,6 @@ from django.utils.decorators import method_decorator
 from plugins.shindan.plugin import ShindanPlugin
 from utils.decorators import admin_required
 from utils.logger_util import LoggerUtil
-from utils.setting_util import SettingUtil
 
 
 # shindan プラグインのデータ読み書きAPI
@@ -23,14 +22,7 @@ class SettingsView(View):
         LoggerUtil.prepare()
         plugin = ShindanPlugin()
         data = plugin.get_data()
-
-        # デフォルトのシステムプロンプトを取得
-        setting_util = SettingUtil()
-        prompts = {
-            'component': setting_util.get('shindan_ai_component_prompt'),
-            'question': setting_util.get('shindan_ai_question_prompt'),
-            'bird': setting_util.get('shindan_ai_bird_prompt'),
-        }
+        prompts = plugin.get_prompts()
 
         return JsonResponse({
             'success': True,
@@ -65,15 +57,6 @@ class SettingsView(View):
         # システムプロンプトの保存（変更がある場合のみ）
         prompts = body.get('prompts')
         if prompts:
-            setting_util = SettingUtil()
-            prompt_key_map = {
-                'component': 'shindan_ai_component_prompt',
-                'question': 'shindan_ai_question_prompt',
-                'bird': 'shindan_ai_bird_prompt',
-            }
-            for prompt_type, value in prompts.items():
-                setting_key = prompt_key_map.get(prompt_type)
-                if setting_key and value is not None:
-                    setting_util.set(setting_key, value)
+            plugin.save_prompts(prompts)
 
         return JsonResponse({'success': True})

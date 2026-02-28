@@ -9,10 +9,12 @@
 
     <!-- OGP -->
     <meta property="og:title" content="{{ plugin_name }} | {{ site_title }}">
-    <meta property="og:description" content="質問に答えて、あなたの野鳥撮影スタイルをAIが診断！あなたに似た野鳥も見つかります。">
+    <meta property="og:description" content="{{ plugin_description|default:'質問に答えて、あなたの野鳥撮影スタイルをAIが診断！あなたに似た野鳥も見つかります。' }}">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="ja_JP">
     {% if site_url %}<meta property="og:url" content="{{ site_url }}/plugins/shindan/">{% endif %}
+    {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+    {% if site_title %}<meta property="og:site_name" content="{{ site_title }}">{% endif %}
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
