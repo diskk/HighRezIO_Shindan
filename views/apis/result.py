@@ -1,5 +1,6 @@
 import json
 import math
+import random
 
 from django.http import JsonResponse
 from django.views import View
@@ -87,9 +88,9 @@ class ResultView(View):
             else:
                 normalized_scores[name] = 50.0
 
-        # 野鳥マッチング: コサイン類似度で最も近い鳥を選出
+        # 野鳥マッチング: コサイン類似度で最も近い鳥を選出（同スコアならランダム）
         user_vector = [normalized_scores.get(name, 0) for name in component_names]
-        best_bird = None
+        best_birds = []
         best_similarity = -1
 
         for bird in birds:
@@ -102,10 +103,14 @@ class ResultView(View):
             similarity = self._cosine_similarity(user_vector, bird_vector)
             if similarity > best_similarity:
                 best_similarity = similarity
-                best_bird = bird
+                best_birds = [bird]
+            elif similarity == best_similarity:
+                best_birds.append(bird)
 
-        if not best_bird:
+        if not best_birds:
             return JsonResponse({'error': '野鳥データがありません'}, status=400)
+
+        best_bird = random.choice(best_birds)
 
         return JsonResponse({
             'success': True,
