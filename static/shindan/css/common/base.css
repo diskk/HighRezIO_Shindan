@@ -1,0 +1,42 @@
+:root {
+    --shindan-primary: #2563eb;
+    --shindan-primary-hover: #1d4ed8;
+    --shindan-primary-light: rgba(37, 99, 235, 0.08);
+    --shindan-bg: #f8fafc;
+    --shindan-card-bg: #ffffff;
+    --shindan-text: #1a1a2e;
+    --shindan-text-secondary: #64748b;
+    --shindan-text-muted: #94a3b8;
+    --shindan-border: #e2e8f0;
+    --shindan-radius: 16px;
+    --shindan-radius-sm: 10px;
+    --shindan-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shindan-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.08);
+    --shindan-max-width: 560px;
+    --shindan-font: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", sans-serif;
+    --shindan-transition: 0.2s ease;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--shindan-font);
+    font-size: 16px;
+    line-height: 1.7;
+    background-color: var(--shindan-bg);
+    color: var(--shindan-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+    display: block;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}

@@ -1,19 +1,70 @@
 {% load static %}
+{% load manage_tags %}
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ plugin_name }}</title>
-    <link rel="stylesheet" href="{% static 'shindan/css/pages/top.css' %}">
+    <title>{{ plugin_name }} | {{ site_title }}</title>
+
+    <!-- OGP -->
+    <meta property="og:title" content="{{ plugin_name }} | {{ site_title }}">
+    <meta property="og:description" content="質問に答えて、あなたの野鳥撮影スタイルをAIが診断！あなたに似た野鳥も見つかります。">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ja_JP">
+    {% if site_url %}<meta property="og:url" content="{{ site_url }}/plugins/shindan/">{% endif %}
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'shindan/css/common/base.css' %}">
+    <link rel="stylesheet" href="{% static 'shindan/css/pages/top.css' %}">
+
+    <!-- AdSense（自動広告を無効化し、手動配置のみ使用） -->
+    {% if adsense_publisher_id %}
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" crossorigin="anonymous"></script>
+    <script>(adsbygoogle=window.adsbygoogle||[]).push({google_ad_client:"{{ adsense_publisher_id }}",enable_page_level_ads:false});</script>
+    {% endif %}
+    <style>.adsense-auto-ads-ignore { google-auto-ads: ignore; }</style>
 </head>
-<body>
-    <div class="shindan-container">
-        <h1 class="shindan-title">{{ plugin_name }}</h1>
-        <p class="shindan-description">プラグインのテストページです。正常に動作しています。</p>
-    </div>
+<body class="adsense-auto-ads-ignore">
+    <!-- React マウントポイント -->
+    <div id="shindan-root"></div>
+
+    <!-- サーバーデータ注入 -->
+    <script id="shindan-data" type="application/json">{{ shindan_data_json|safe }}</script>
+    <script>
+        window.SHINDAN_CONFIG = {
+            adsensePublisherId: '{{ adsense_publisher_id }}',
+            adUnitId: '{{ ad_unit_id }}',
+            adPreview: {{ ad_preview|yesno:"true,false" }},
+            siteUrl: '{{ site_url }}',
+            siteTitle: '{{ site_title|escapejs }}',
+            csrfToken: '{{ csrf_token }}',
+            title: '{{ plugin_name|escapejs }}',
+            description: '{{ plugin_description|escapejs }}',
+            topImageUrl: '{{ top_image_url }}',
+        };
+    </script>
+
+    <!-- CDN: React / ReactDOM -->
+    {% is_react_dev_mode as react_dev %}
+    {% if react_dev %}
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    {% else %}
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    {% endif %}
+
+    <!-- CDN: Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+    <!-- Shindan App -->
+    {% react_page 'shindan/js/pages/top.jsx' %}
 </body>
 </html>

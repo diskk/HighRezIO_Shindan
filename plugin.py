@@ -10,3 +10,7 @@ class ShindanPlugin(PluginBase):
     def get_url_patterns(self):
         from plugins.shindan.urls import urlpatterns
         return urlpatterns
+
+    # 管理画面用設定JSXコンポーネントのパスを返す
+    def get_settings_component(self):
+        return 'shindan/js/manage/settings.jsx'

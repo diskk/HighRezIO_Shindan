@@ -1,30 +1,628 @@
-*, *::before, *::after {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", sans-serif;
-    line-height: 1.6;
-    background-color: #f5f5f5;
-    color: #1a1a1a;
-}
+/* ========================================
+   レイアウト
+   ======================================== */
 
 .shindan-container {
-    max-width: 600px;
-    margin: 80px auto;
-    padding: 40px 24px;
+    max-width: var(--shindan-max-width);
+    margin: 0 auto;
+    padding: 16px 16px;
+    min-height: 100dvh;
+}
+
+/* ========================================
+   開始画面
+   ======================================== */
+
+.shindan-start {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80dvh;
+    text-align: center;
+    padding: 16px 0 40px;
+}
+
+.shindan-start__icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.shindan-start__image {
+    width: 300px;
+    height: 200px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 16px;
+}
+
+.shindan-start__title {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 12px;
+    line-height: 1.3;
+}
+
+.shindan-start__description {
+    font-size: 15px;
+    color: var(--shindan-text-secondary);
+    margin: 0 0 8px;
+    max-width: 400px;
+}
+
+.shindan-start__meta {
+    font-size: 13px;
+    color: var(--shindan-text-muted);
+    margin: 0 0 32px;
+}
+
+.shindan-start-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--shindan-primary);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 48px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: background var(--shindan-transition), transform var(--shindan-transition);
+}
+
+.shindan-start-btn:hover {
+    background: var(--shindan-primary-hover);
+}
+
+.shindan-start-btn:active {
+    transform: scale(0.97);
+}
+
+.shindan-start__site-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 24px;
+    color: var(--shindan-primary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: opacity var(--shindan-transition);
+}
+
+.shindan-start__site-link:hover {
+    opacity: 0.7;
+}
+
+/* ========================================
+   質問画面
+   ======================================== */
+
+.shindan-question {
+    padding: 8px 0;
+}
+
+/* プログレスバー */
+.shindan-progress {
+    margin-bottom: 16px;
+}
+
+.shindan-progress__label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+}
+
+.shindan-progress__count {
+    font-size: 13px;
+    color: var(--shindan-text-muted);
+    font-weight: 500;
+}
+
+.shindan-progress__current {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--shindan-primary);
+}
+
+.shindan-progress__bar {
+    width: 100%;
+    height: 6px;
+    background: var(--shindan-border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.shindan-progress__fill {
+    height: 100%;
+    background: var(--shindan-primary);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* 質問カード */
+.shindan-qcard {
+    background: var(--shindan-card-bg);
+    border-radius: var(--shindan-radius);
+    padding: 24px 20px;
+    box-shadow: var(--shindan-shadow);
+    margin-bottom: 16px;
+}
+
+.shindan-qcard__text {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.6;
+    margin: 0 0 20px;
     text-align: center;
 }
 
-.shindan-title {
-    font-size: 24px;
+/* 回答ボタン */
+.shindan-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shindan-choice-btn {
+    width: 100%;
+    padding: 12px 20px;
+    border: 2px solid var(--shindan-border);
+    border-radius: var(--shindan-radius-sm);
+    background: var(--shindan-card-bg);
+    color: var(--shindan-text);
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+    transition: border-color var(--shindan-transition), background var(--shindan-transition), transform var(--shindan-transition);
+}
+
+.shindan-choice-btn:hover {
+    border-color: var(--shindan-primary);
+    background: var(--shindan-primary-light);
+}
+
+.shindan-choice-btn:active {
+    transform: scale(0.98);
+}
+
+/* 質問切り替えアニメーション */
+.shindan-qcard--enter {
+    animation: shindanFadeIn 0.25s ease;
+}
+
+@keyframes shindanFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   ローディング画面
+   ======================================== */
+
+.shindan-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60dvh;
+    text-align: center;
+}
+
+.shindan-loading__spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--shindan-border);
+    border-top-color: var(--shindan-primary);
+    border-radius: 50%;
+    animation: shindanSpin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes shindanSpin {
+    to { transform: rotate(360deg); }
+}
+
+.shindan-loading__text {
+    font-size: 15px;
+    color: var(--shindan-text-secondary);
+    margin: 0;
+}
+
+/* ========================================
+   結果画面
+   ======================================== */
+
+.shindan-result {
+    padding: 8px 0 40px;
+}
+
+.shindan-result__image {
+    display: block;
+    width: 200px;
+    height: 133px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin: 0 auto 12px;
+}
+
+.shindan-result__title {
+    font-size: 18px;
     font-weight: 700;
+    text-align: center;
+    margin: 0 0 12px;
+    color: var(--shindan-text);
+}
+
+/* 結果統合カード */
+.shindan-result-card {
+    background: var(--shindan-card-bg);
+    border-radius: var(--shindan-radius);
+    padding: 20px 16px;
+    box-shadow: var(--shindan-shadow-lg);
+    margin-bottom: 16px;
+}
+
+.shindan-result-card__label {
+    font-size: 13px;
+    color: var(--shindan-text-muted);
+    margin: 0 0 12px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.shindan-result-card__bird {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.shindan-result-card__name {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    min-width: 0;
+    word-break: break-word;
+}
+
+.shindan-result-card__info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--shindan-text-muted);
+    transition: color var(--shindan-transition);
+    flex-shrink: 0;
+}
+
+.shindan-result-card__info-btn:hover {
+    color: var(--shindan-primary);
+}
+
+.shindan-result-card__description {
+    font-size: 14px;
+    color: var(--shindan-text-secondary);
+    line-height: 1.8;
+    margin: 0 0 8px;
+    text-align: left;
+    animation: shindanFadeIn 0.25s ease;
+}
+
+/* 鳥アバター（共通） */
+.shindan-bird-card__avatar {
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.shindan-bird-card__avatar img {
+    display: block;
+}
+
+/* レーダーチャート（統合カード内） */
+.shindan-radar {
+    padding: 4px 0 0;
+}
+
+.shindan-radar__title {
+    font-size: 13px;
+    color: var(--shindan-text-muted);
+    font-weight: 500;
+    text-align: center;
+    margin: 8px 0 0;
+}
+
+.shindan-radar__footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 12px;
+}
+
+.shindan-radar__canvas-wrap {
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+/* 成分ボタンリスト（未使用、互換のため残す） */
+.shindan-components {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.shindan-comp-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--shindan-border);
+    border-radius: 20px;
+    background: var(--shindan-card-bg);
+    color: var(--shindan-text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    transition: border-color var(--shindan-transition), color var(--shindan-transition);
+}
+
+.shindan-comp-btn:hover {
+    border-color: var(--shindan-primary);
+    color: var(--shindan-primary);
+}
+
+/* ========================================
+   成分詳細ポップアップ
+   ======================================== */
+
+.shindan-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: shindanFadeOverlay 0.2s ease;
+}
+
+@keyframes shindanFadeOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.shindan-popup {
+    background: var(--shindan-card-bg);
+    border-radius: var(--shindan-radius);
+    padding: 28px 24px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: var(--shindan-shadow-lg);
+    animation: shindanSlideUp 0.25s ease;
+}
+
+@keyframes shindanSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.shindan-popup__title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 12px;
+}
+
+.shindan-popup__description {
+    font-size: 14px;
+    color: var(--shindan-text-secondary);
+    line-height: 1.7;
     margin: 0 0 16px;
 }
 
-.shindan-description {
-    font-size: 16px;
-    color: #666;
+.shindan-popup__section {
+    margin-bottom: 12px;
+}
+
+.shindan-popup__section-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--shindan-primary);
+    letter-spacing: 0.05em;
+    margin: 0 0 4px;
+}
+
+.shindan-popup__section-text {
+    font-size: 14px;
+    color: var(--shindan-text-secondary);
+    line-height: 1.7;
     margin: 0;
+}
+
+.shindan-popup__close {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    border: 1px solid var(--shindan-border);
+    border-radius: var(--shindan-radius-sm);
+    background: transparent;
+    color: var(--shindan-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    transition: background var(--shindan-transition);
+}
+
+.shindan-popup__close:hover {
+    background: var(--shindan-primary-light);
+}
+
+/* ========================================
+   ブログ誘導・もう一度ボタン
+   ======================================== */
+
+.shindan-cta {
+    text-align: center;
+    padding: 24px 0;
+}
+
+.shindan-cta__text {
+    font-size: 14px;
+    color: var(--shindan-text-muted);
+    margin: 0 0 12px;
+}
+
+.shindan-cta__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--shindan-primary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+    transition: opacity var(--shindan-transition);
+}
+
+.shindan-cta__link:hover {
+    opacity: 0.8;
+}
+
+.shindan-retry-btn {
+    display: block;
+    margin: 0;
+    padding: 6px 20px;
+    border: 1.5px solid var(--shindan-border);
+    border-radius: var(--shindan-radius-sm);
+    background: transparent;
+    color: var(--shindan-text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    transition: border-color var(--shindan-transition), color var(--shindan-transition);
+}
+
+.shindan-retry-btn:hover {
+    border-color: var(--shindan-primary);
+    color: var(--shindan-primary);
+}
+
+/* ========================================
+   広告スロット
+   ======================================== */
+
+.shindan-ad-slot {
+    margin: 12px auto;
+    text-align: center;
+    width: 320px;
+    height: 100px;
+    overflow: hidden;
+}
+
+.shindan-ad-slot .adsbygoogle {
+    width: 320px;
+    height: 100px;
+}
+
+.shindan-ad-slot--preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 320px;
+    height: 100px;
+    margin: 12px auto;
+    background: #f1f5f9;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ========================================
+   レスポンシブ（PCでの余白調整）
+   ======================================== */
+
+@media (min-width: 640px) {
+    .shindan-container {
+        padding: 32px 24px;
+    }
+
+    .shindan-progress {
+        margin-bottom: 24px;
+    }
+
+    .shindan-qcard {
+        padding: 40px 32px;
+        margin-bottom: 24px;
+    }
+
+    .shindan-qcard__text {
+        font-size: 18px;
+        margin-bottom: 28px;
+    }
+
+    .shindan-choice-btn {
+        padding: 14px 20px;
+    }
+
+    .shindan-choices {
+        gap: 10px;
+    }
+
+    .shindan-result {
+        padding: 24px 0 40px;
+    }
+
+    .shindan-result-card {
+        padding: 24px 24px;
+    }
+
+    .shindan-result-card__name {
+        font-size: 22px;
+    }
+
+    .shindan-radar__canvas-wrap {
+        max-width: 360px;
+    }
+
+    .shindan-ad-slot {
+        width: 100%;
+        max-width: 728px;
+        height: 90px;
+    }
+
+    .shindan-ad-slot .adsbygoogle {
+        width: 100%;
+        max-width: 728px;
+        height: 90px;
+    }
+
+    .shindan-ad-slot--preview {
+        width: 100%;
+        max-width: 728px;
+        height: 90px;
+    }
 }
