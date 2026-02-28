@@ -179,7 +179,10 @@ const GeneralTab = ({ settings, onChange, isPublic, onPublicChange, adBlockerDet
 
     return (
         <div className="space-y-4">
-            <p className="text-xs text-slate-500">診断ページの基本設定を行います。</p>
+            <p className="text-xs text-slate-500">
+                診断ページの基本設定を行います。
+                <a href="/plugins/shindan/" target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 hover:text-blue-800 underline">診断ページを開く ↗</a>
+            </p>
 
             {/* 一般公開 */}
             <div className="flex items-center gap-3">
@@ -1192,6 +1195,7 @@ const BirdsTab = ({ birds, components, onChange, prompt, onPromptChange }) => {
                     onConfirm={handleMediaSelect}
                     onCancel={() => setMediaSelecting(null)}
                     initialSelectedIds={birds[mediaSelecting]?.media_id ? [birds[mediaSelecting].media_id] : []}
+                    initialTags={birds[mediaSelecting]?.name ? [birds[mediaSelecting].name] : null}
                 />,
                 document.body
             )}
