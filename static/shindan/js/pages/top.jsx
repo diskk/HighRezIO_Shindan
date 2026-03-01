@@ -9,6 +9,28 @@ const shindanData = JSON.parse(document.getElementById('shindan-data').textConte
 const config = window.SHINDAN_CONFIG;
 const { components, questions, birds } = shindanData;
 
+// 一言診断コメントを生成
+// スコア分布に応じて4パターンを出し分け
+const COMMENT_GAP_TOP = 15;
+const COMMENT_GAP_MID = 10;
+const generateComment = (sortedScores) => {
+    const s = sortedScores;
+    const diff12 = s[0].score - s[1].score;
+    const diff23 = s[1].score - s[2].score;
+    const diff34 = s.length > 3 ? s[2].score - s[3].score : Infinity;
+
+    if (diff12 >= COMMENT_GAP_TOP) {
+        return '「' + s[0].name + '」が際立つタイプ';
+    }
+    if (diff23 >= COMMENT_GAP_MID) {
+        return '「' + s[0].name + '」と「' + s[1].name + '」が高めのタイプ';
+    }
+    if (diff34 >= COMMENT_GAP_MID) {
+        return '「' + s[0].name + '」「' + s[1].name + '」「' + s[2].name + '」がバランスよく高いタイプ';
+    }
+    return 'バランス型タイプ';
+};
+
 // 回答選択肢
 const CHOICES = [
     { key: 'yes', label: 'はい' },
@@ -237,12 +259,11 @@ const generateResultImage = async (bird, scores) => {
         ctx.fillText(siteUrl, rightX, topY + (siteName ? 56 : 28));
     }
 
-    // 診断コメント（下部センタリング、上位2成分を抽出）
-    const sortedScores = components
+    // 診断コメント（下部センタリング）
+    const imgSortedScores = components
         .map(c => ({ name: c.name, score: scores[c.name] || 0 }))
         .sort((a, b) => b.score - a.score);
-    const top2 = sortedScores.slice(0, 2).map(s => s.name);
-    const commentText = 'あなたは「' + top2[0] + '」と「' + top2[1] + '」が高めのタイプ';
+    const commentText = 'あなたは' + generateComment(imgSortedScores);
 
     const bottomY = cardBottom - pad;
     ctx.textAlign = 'center';
@@ -661,12 +682,11 @@ const ResultScreen = ({ result, onRetry }) => {
         setIsSaving(false);
     };
 
-    // 上位2成分を抽出して一言診断を生成
+    // 一言診断を生成
     const sortedScores = components
         .map(c => ({ name: c.name, score: scores[c.name] || 0 }))
         .sort((a, b) => b.score - a.score);
-    const top2 = sortedScores.slice(0, 2).map(s => s.name);
-    const commentText = 'あなたは「' + top2[0] + '」と「' + top2[1] + '」が高めのタイプ';
+    const commentText = 'あなたは' + generateComment(sortedScores);
 
     return (
         <div className="shindan-result">
