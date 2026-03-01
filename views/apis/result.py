@@ -88,10 +88,10 @@ class ResultView(View):
             else:
                 normalized_scores[name] = 50.0
 
-        # 野鳥マッチング: コサイン類似度で最も近い鳥を選出（同スコアならランダム）
+        # 野鳥マッチング: ユークリッド距離で最も近い鳥を選出（同距離ならランダム）
         user_vector = [normalized_scores.get(name, 0) for name in component_names]
         best_birds = []
-        best_similarity = -1
+        best_distance = float('inf')
 
         for bird in birds:
             bird_scores = bird.get('scores', {})
@@ -100,11 +100,11 @@ class ResultView(View):
                 (bird_scores.get(name, 5) - 1) / 9 * 100
                 for name in component_names
             ]
-            similarity = self._cosine_similarity(user_vector, bird_vector)
-            if similarity > best_similarity:
-                best_similarity = similarity
+            distance = self._euclidean_distance(user_vector, bird_vector)
+            if distance < best_distance:
+                best_distance = distance
                 best_birds = [bird]
-            elif similarity == best_similarity:
+            elif distance == best_distance:
                 best_birds.append(bird)
 
         if not best_birds:
@@ -119,15 +119,9 @@ class ResultView(View):
                 'id': best_bird['id'],
                 'name': best_bird['name'],
             },
-            'similarity': round(best_similarity * 100, 1),
         })
 
-    # コサイン類似度を計算
+    # ユークリッド距離を計算
     @staticmethod
-    def _cosine_similarity(vec_a, vec_b):
-        dot_product = sum(a * b for a, b in zip(vec_a, vec_b))
-        magnitude_a = math.sqrt(sum(a ** 2 for a in vec_a))
-        magnitude_b = math.sqrt(sum(b ** 2 for b in vec_b))
-        if magnitude_a == 0 or magnitude_b == 0:
-            return 0
-        return dot_product / (magnitude_a * magnitude_b)
+    def _euclidean_distance(vec_a, vec_b):
+        return math.sqrt(sum((a - b) ** 2 for a, b in zip(vec_a, vec_b)))
