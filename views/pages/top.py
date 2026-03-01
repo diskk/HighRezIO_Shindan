@@ -126,8 +126,18 @@ class TopView(View):
         site_title = setting_util.get('site_title') or ''
         site_url = setting_util.get('site_url') or ''
 
-        # OGP画像（フルURL）
-        og_image = f'{site_url}{top_image_url}' if site_url and top_image_url else ''
+        # OGP画像: サイトOGP画像を使用
+        site_ogp_image_id = setting_util.get('site_ogp_image_id')
+        og_image = ''
+        if site_ogp_image_id and site_url:
+            try:
+                ogp_media = MediaFile.objects.only('type', 'processed_at').get(id=site_ogp_image_id)
+                pa = ogp_media.processed_at
+                og_image = f"{site_url}/api/download/{ogp_media.type}/{site_ogp_image_id}/full/"
+                if pa:
+                    og_image = f"{site_url}/api/download/{ogp_media.type}/{site_ogp_image_id}/full/{pa}/"
+            except MediaFile.DoesNotExist:
+                pass
 
         context = {
             'plugin_name': plugin_title,
