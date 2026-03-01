@@ -52,6 +52,11 @@ class SettingsView(View):
                 for item in items:
                     if not item.get('id'):
                         item['id'] = str(uuid.uuid4())
+
+            # 鳥の matching_scores を自動算出（質問・鳥データが揃っている場合）
+            if data.get('questions') and data.get('birds') and data.get('components'):
+                plugin.compute_matching_scores(data)
+
             plugin.save_data(data)
 
         # システムプロンプトの保存（変更がある場合のみ）

@@ -89,17 +89,37 @@ class ResultView(View):
                 normalized_scores[name] = 50.0
 
         # 野鳥マッチング: ユークリッド距離で最も近い鳥を選出（同距離ならランダム）
+        # matching_scores（最適化済み0-100）があればそれを使用、なければz-score正規化にフォールバック
+        has_matching_scores = any('matching_scores' in b for b in birds)
+
+        if not has_matching_scores:
+            # フォールバック: z-score正規化（成分ごとに平均0・標準偏差1に揃え、0-100にスケール）
+            bird_mean = {}
+            bird_std = {}
+            for name in component_names:
+                values = [b.get('scores', {}).get(name, 5) for b in birds]
+                mean = sum(values) / len(values)
+                bird_mean[name] = mean
+                bird_std[name] = math.sqrt(sum((v - mean) ** 2 for v in values) / len(values))
+
         user_vector = [normalized_scores.get(name, 0) for name in component_names]
         best_birds = []
         best_distance = float('inf')
 
         for bird in birds:
-            bird_scores = bird.get('scores', {})
-            # 鳥のスコア（1-10）を 0-100 にスケール
-            bird_vector = [
-                (bird_scores.get(name, 5) - 1) / 9 * 100
-                for name in component_names
-            ]
+            if has_matching_scores and 'matching_scores' in bird:
+                bird_vector = [bird['matching_scores'].get(name, 50) for name in component_names]
+            else:
+                bird_scores = bird.get('scores', {})
+                bird_vector = []
+                for name in component_names:
+                    raw = bird_scores.get(name, 5)
+                    std = bird_std[name]
+                    if std > 0:
+                        z = (raw - bird_mean[name]) / std
+                        bird_vector.append(max(0, min(100, z * 25 + 50)))
+                    else:
+                        bird_vector.append(50.0)
             distance = self._euclidean_distance(user_vector, bird_vector)
             if distance < best_distance:
                 best_distance = distance

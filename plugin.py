@@ -1,3 +1,7 @@
+import random
+
+import numpy as np
+
 from plugins.base import PluginBase
 
 
@@ -57,6 +61,115 @@ class ShindanPlugin(PluginBase):
             key: prompts.get(key, self.DEFAULTS[default_key])
             for key, default_key in prompt_keys.items()
         }
+
+    # 鳥の matching_scores を算出してデータに書き込む
+    # ランダム回答シミュレーション + 反復最適化で全鳥が均等に選ばれるスコアを算出
+    # NOTICE: data オブジェクトを直接変更する（保存は呼び出し側で行う）
+    # Args:
+    #   data: プラグインデータ（components, questions, birds を含む）
+    #   n_samples: ランダム回答のサンプル数
+    #   n_iterations: 最適化の反復回数
+    #   lr: 学習率
+    #   regularization: 元スコアへの引き戻し強度
+    def compute_matching_scores(self, data, n_samples=5000, n_iterations=100,
+                                lr=0.1, regularization=0.03):
+        components = data.get('components', [])
+        questions = data.get('questions', [])
+        birds = data.get('birds', [])
+
+        if not components or not questions or not birds:
+            return
+
+        component_names = [c['name'] for c in sorted(
+            components, key=lambda c: c.get('sort_order', 0)
+        )]
+        n_comp = len(component_names)
+        n_birds = len(birds)
+        answer_choices = ('yes', 'slightly_yes', 'slightly_no', 'no')
+
+        # 質問スコアを行列化: (n_questions, 4, n_comp)
+        n_questions = len(questions)
+        q_scores = np.zeros((n_questions, 4, n_comp))
+        for qi, question in enumerate(questions):
+            scores = question.get('scores', {})
+            for ai, choice in enumerate(answer_choices):
+                choice_scores = scores.get(choice, {})
+                for ci, comp_name in enumerate(component_names):
+                    q_scores[qi, ai, ci] = choice_scores.get(comp_name, 0)
+
+        # 正規化用の最大・最小
+        max_possible = q_scores.max(axis=1).sum(axis=0)  # (n_comp,)
+        min_possible = q_scores.min(axis=1).sum(axis=0)  # (n_comp,)
+        score_range = max_possible - min_possible
+        score_range[score_range == 0] = 1  # ゼロ除算防止
+
+        # ユーザースコアサンプルを一括生成
+        # ランダム回答インデックス: (n_samples, n_questions)
+        answer_indices = np.random.randint(0, 4, size=(n_samples, n_questions))
+        # 各サンプル・各質問の選択されたスコアを取得: (n_samples, n_questions, n_comp)
+        q_idx = np.arange(n_questions)[np.newaxis, :]  # (1, n_questions)
+        raw_samples = q_scores[q_idx, answer_indices, :]  # (n_samples, n_questions, n_comp)
+        raw_totals = raw_samples.sum(axis=1)  # (n_samples, n_comp)
+        # 正規化 0-100
+        user_samples = np.clip((raw_totals - min_possible) / score_range * 100, 0, 100)
+
+        user_centroid = user_samples.mean(axis=0)  # (n_comp,)
+
+        # 鳥ベクトル初期化（z-score正規化）
+        bird_raw = np.array([
+            [b.get('scores', {}).get(name, 5) for name in component_names]
+            for b in birds
+        ], dtype=np.float64)  # (n_birds, n_comp)
+        bird_mean = bird_raw.mean(axis=0)
+        bird_std = bird_raw.std(axis=0)
+        bird_std_safe = np.where(bird_std > 0, bird_std, 1.0)
+        bird_vectors = np.clip((bird_raw - bird_mean) / bird_std_safe * 25 + 50, 0, 100)
+        # std==0 の成分は 50.0
+        bird_vectors[:, bird_std == 0] = 50.0
+
+        original_vectors = bird_vectors.copy()
+
+        # 反復最適化（numpy行列演算）
+        target = n_samples / n_birds
+        for _ in range(n_iterations):
+            # 全サンプル×全鳥のユークリッド距離: (n_samples, n_birds)
+            diff = user_samples[:, np.newaxis, :] - bird_vectors[np.newaxis, :, :]
+            distances = np.sqrt((diff ** 2).sum(axis=2))
+
+            # 最近傍の鳥インデックス: (n_samples,)
+            nearest = distances.argmin(axis=1)
+
+            # 鳥ごとの集計
+            counts = np.bincount(nearest, minlength=n_birds)
+
+            # 鳥ごとのマッチユーザー重心
+            centroids = np.zeros((n_birds, n_comp))
+            for i in range(n_birds):
+                mask = nearest == i
+                if counts[i] > 0:
+                    centroids[i] = user_samples[mask].mean(axis=0)
+
+            # ベクトル調整
+            for i in range(n_birds):
+                if counts[i] == 0:
+                    bird_vectors[i] += lr * 2 * (user_centroid - bird_vectors[i])
+                elif counts[i] > target * 1.2:
+                    factor = lr * (counts[i] / target - 1)
+                    bird_vectors[i] += factor * (bird_vectors[i] - centroids[i])
+                elif counts[i] < target * 0.8:
+                    factor = lr * (1 - counts[i] / target)
+                    bird_vectors[i] += factor * (centroids[i] - bird_vectors[i])
+
+            # 正則化 + クランプ（一括）
+            bird_vectors += regularization * (original_vectors - bird_vectors)
+            np.clip(bird_vectors, 0, 100, out=bird_vectors)
+
+        # 結果を birds に書き込み
+        for i, bird in enumerate(birds):
+            bird['matching_scores'] = {
+                name: round(float(bird_vectors[i, j]), 1)
+                for j, name in enumerate(component_names)
+            }
 
     # プロンプト設定を保存（デフォルト値と同じ場合は保存しない）
     # Args:
