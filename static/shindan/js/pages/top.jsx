@@ -213,21 +213,28 @@ const generateResultImage = async (bird, scores) => {
     ctx.drawImage(chartCanvas, chartX, chartY, chartSize, chartSize);
     tempChart.destroy();
 
-    // タイトル + URL（右上）
+    // サイト名 + 診断名 + URL（右上）
     const rightX = SIZE - cardMargin - pad;
     const topY = cardMargin + pad;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
 
-    ctx.font = '600 24px "Noto Sans JP"';
-    ctx.fillStyle = '#475569';
-    ctx.fillText(config.title || 'AIとりや成分診断', rightX, topY);
+    const siteName = config.siteTitle || '';
+    if (siteName) {
+        ctx.font = '600 22px "Noto Sans JP"';
+        ctx.fillStyle = '#475569';
+        ctx.fillText(siteName, rightX, topY);
+    }
+
+    ctx.font = '500 20px "Noto Sans JP"';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText(config.title || 'AIとりや成分診断', rightX, topY + (siteName ? 30 : 0));
 
     const siteUrl = (config.siteUrl || '').replace(/^https?:\/\//, '');
     if (siteUrl) {
-        ctx.font = '400 20px "Noto Sans JP"';
+        ctx.font = '400 18px "Noto Sans JP"';
         ctx.fillStyle = '#94a3b8';
-        ctx.fillText(siteUrl, rightX, topY + 32);
+        ctx.fillText(siteUrl, rightX, topY + (siteName ? 56 : 28));
     }
 
     // 診断コメント（下部センタリング、上位2成分を抽出）

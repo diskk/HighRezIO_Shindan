@@ -1,5 +1,6 @@
 import json
 import random
+import uuid as uuid_mod
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -7,8 +8,12 @@ from django.views import View
 
 from common.models import MediaFile
 from plugins.shindan.plugin import ShindanPlugin
+from utils.bot_detect_util import BotDetectUtil
 from utils.logger_util import LoggerUtil
 from utils.setting_util import SettingUtil
+from utils.stats_util import StatsUtil
+
+PAGE_KEY = 'plugin:shindan'
 
 
 # 診断トップページ
@@ -141,4 +146,14 @@ class TopView(View):
             'ad_preview': ad_preview,
             'detect_ad_blocker': detect_ad_blocker,
         }
-        return render(request, 'shindan/top.html', context)
+        response = render(request, 'shindan/top.html', context)
+
+        # PV/UU記録
+        visitor_uuid = request.COOKIES.get('viz_uuid') or str(uuid_mod.uuid4())
+        ua = request.META.get('HTTP_USER_AGENT', '')
+        is_bot = BotDetectUtil.is_bot(ua)
+        if not is_admin and not is_bot:
+            StatsUtil.record_page_view(PAGE_KEY, visitor_uuid)
+        response.set_cookie('viz_uuid', visitor_uuid, max_age=365 * 86400, samesite='Lax')
+
+        return response
